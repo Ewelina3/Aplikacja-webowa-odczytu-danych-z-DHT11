@@ -37,28 +37,9 @@ Python3:
 ```
 sudo apt-get install python3-pip
 ```
-rpi.gpio: 
-```
-pip3 install rpi.gpio
-```
-
-Instalacja GIT i biblioteki DHT do obsługi czujnika:
-
 GIT: 
 ```
 sudo apt-get install git-core
-```
-DHT klonowanie repozytorium: 
-```
-git clone https://github.com/adafruit/Adafruit_Python_DHT.git
-```
-następnie wchodzimy do utworzonego przez klonowanie projektu 
-```
-cd Adafruit_Python_DHT
-```
-i dokonujemy instalacji pythona wewnątrz 
-```
-sudo python3 setup.py install
 ```
 ### Wirtualne środowisko Python
 
@@ -132,9 +113,21 @@ Komenda instalacyjna serwera:
 ```
 apt-get install nginx
 ```
-Usunięcie obecnej konfiguracji nginx i ustawienie nowej konfiguracji z symbolic linkiem
+Usunięcie obecnej konfiguracji nginx i ustawienie nowej konfiguracji z symbolic linkiem (treść pliku **lab_app_nginx.conf** znajduje się w głównym folderze aplikacji - lab_app)
 ```
-rm /etc/nginx/sites-enabled
+rm /etc/nginx/sites-enabled/default
+```
+Będąc na środowkisku wirtualnym lab_app w folderze lab_app tworzymi nowy plik konfiguracyjny poleceniem vim
+```
+vim lab_app_nginx.conf
+```
+Symbolic link tworzenie:
+```
+ln -s /var/www/lab_app/lab_app_nginx.conf /etc/nginx/conf.d/
+```
+Po zmianie wymagany restart usługi nginx:
+```
+/etc/init.d/nginx restart
 ```
 
 Komenda instalacyjna frameworka Flask:
@@ -149,4 +142,119 @@ Wejść w wirtualne środowisko przechodząc do folderu lab_app i wprowadzając 
 Komenda instalacyjna serwera:
 ```
 pip install uwsgi
+```
+Będąć w folderze lab_app tworzymy plik ini do serwera komendą: 
+```
+vim lab_app_uwsgi.ini
+```
+(treść pliku **lab_app_uwsgi.ini** znajduje się w głównym folderze aplikacji - lab_app)
+### Automatyczne startowanie aplikacji webowej (systemd)
+Tworzenie pliku emperor.uwsgi.service :
+```
+vim /etc/systemd/system/emperor.uwsgi.service
+```
+zawartość pliku: 
+```
+[Unit]
+Description=uWSGI Emperor
+After=syslog.target
+
+[Service]
+ExecStart=/var/www/lab_app/bin/uwsgi --ini /var/www/lab_app/lab_app_uwsgi.ini
+# Requires systemd version 211 or newer
+RuntimeDirectory=uwsgi
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
+```
+Uruchomienie usługi:
+```
+systemctl start emperor.uwsgi.service
+```
+Sprawdzenie statusu usługi:
+```
+systemctl status emperor.uwsgi.service
+```
+Włączenie usługi:
+```
+systemctl enable emperor.uwsgi.service
+```
+Po takich operacjach nasza aplikacja będzie się odpalać zawsze, nawet po reboocie
+
+### Instalacja i tworzenie bazy danych (SQLite3)
+Przechodzimy do folderu lab_app projektu a nastepnie instalacja komendą po sudo su:
+```
+apt-get install sqlite3
+```
+Tworzymy bazę danych dla projektu:
+```
+sqlite3 lab_app.db
+```
+Tworzenie tablicy przechowującej temperatury:
+```
+sqlite> begin;
+sqlite> create table temperatures (rDatetime datetime, sensorID text, temp numeric);
+sqlite> commit;
+```
+Tworzenie tablicy przechowującej wilgotność:
+```
+sqlite> begin;
+sqlite> create table humidities (rDatetime datetime, sensorID text, hum numeric);
+sqlite> commit;
+```
+Podgląd stworzonych tabel:
+```
+sqlite> .tables
+```
+Wyjście z sqlite:
+```
+sqlite> .exit
+```
+### Instalacja GIT i biblioteki DHT do obsługi czujnika:
+Będąc standardowo w folderze lab app instalujemy rpi.gpio:
+```
+pip install rpi.gpio
+```
+
+DHT klonowanie repozytorium: 
+```
+git clone https://github.com/adafruit/Adafruit_Python_DHT.git
+```
+następnie wchodzimy do utworzonego przez klonowanie projektu 
+```
+cd Adafruit_Python_DHT
+```
+i dokonujemy instalacji pythona wewnątrz 
+```
+sudo python3 setup.py install
+```
+### Tworzenie pliku zapisującego odczytane z czujnika dane do bazy danych i ustawienie crona na cykliczne pozyskiwanie danych:
+Plik zapisujący dane do bazy znajduje się w folderze głownym aplikacji o nazwie **env_log.py**
+
+Wejście do crona
+```
+crontab -e
+```
+Dodajemy wpis do crona o treści:
+```
+*/5 * * * * /var/www/lab_app/bin/python /var/www/lab_app/env_log.py >/dev/null 2>&1
+```
+Plik będzie sie wykonywał co 5 minut
+### Plotly i chart studio:
+Instalacja Plotly i chart studio:
+```
+pip install plotly
+pip install chart_studio
+pip install plotly --upgrade
+```
+Nastepnie tworzymy konto na chart studio i pozyskujemy potrzebne credentials z api_key (username to nasza nazwa uzytkownika a api_key to klucz dostepny na stronie - zakładka API Settings)
+```
+python 
+import chart_studio
+chart_studio.tools.set_credentials_file(username='ewela123456', api_key='lr1c37zw')
 ```
