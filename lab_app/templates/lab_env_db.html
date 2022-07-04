@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Dane bazowe strony
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta charset="utf-8">
+    <title>Warunki pogodowe - RPi</title>
+    <meta name="description" content="Warunki pogodowe - RPi">
+    <meta name="author" content="Ewelina Paszkiewicz">
+    <meta http-equiv="refresh" content="600">
+    <!-- Meta data
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Czcionka
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <!-- CSS
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="stylesheet" href="/static/css/normalize.css">
+    <link rel="stylesheet" href="/static/css/skeleton.css">
+    <!-- Favicon
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+	      <form id="datetime_range" action="/lab_env_db" method="GET">
+	        <!-- <div class="row">          -->
+	          <div class="three columns">
+	            <label for="from">Data od</label>
+	            <input class="u-full-width" id="datetimepicker1" type="text" value="{{from_date}}" name="from">
+	          </div>
+	        <!-- </div> -->
+	        <!-- <div class="row"> -->
+	          <div class="three columns">
+	            <label for="to">Data do</label>
+	            <input class="u-full-width" id="datetimepicker2" type="text" value="{{to_date}}" name="to">
+	          </div>
+	        <!-- </div>          -->
+		<div class="three columns">
+			<label for="sensor_id">ID sensora (obecnie tylko 1)</label>
+			<input class="u-full-width" id="sensor_id" type="text" value="{{sensorid}}" name="sensor_id">
+		</div>
+	        <!-- <div class="row"> -->
+	          <div class="two columns">
+	            <input class="button-primary" type="submit" value="Potwierdź" style="position:relative; top: 28px" id="submit_button" />
+	          </div>
+	        <!-- </div> -->
+	      </form>
+      </div>
+      <div class="row">
+      <div class="eleven columns">
+      	<div class="one column">
+      		<div class="one column">
+			      <a href="" id="plotly" style="position:relative;top:15px">Plotly</a>
+			</div>
+          <a href="/lab_temp" style="position:relative;top:15px">Obecna</a>
+       	</div>
+        <form id="range_select" action = "/lab_env_db" method="GET">
+          <input type="hidden" name="sensor_id" class="sensor_id" />
+          <div class="one column">
+            <input type="radio" name="range_h" value="3" id="radio_3" /><label for="radio_3">Ostatnie 3 godziny</label>
+          </div>
+          <div class="one column">
+            <input type="radio" name="range_h" value="6" id="radio_6" /><label for="radio_6">Ostatnie 6 godzin</label>
+          </div>
+          <div class="one column">
+	    <input type="radio" name="range_h" value="12" id="radio_12" /><label for="radio_12">Ostatnie 12 godzin</label>
+          </div>
+          <div class="one column">
+            <input type="radio" name="range_h" value="24" id="radio_24" /><label for="radio_24">Ostatnia doba</label>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="row">
+     <a href="" id="plotly_url" target="_blank"></a><span id="plotly_wait"></span>
+	</div>
+      <div class="row">
+        <div class="one-third column" style="margin-top: 5%">
+          <strong>Wyświetlanie wszystkich temperatur</strong>
+	  <h2>Temperatury</h2>
+            <table class="u-full-width">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>&deg;C</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in temp %}
+                <tr>
+                  <td>{{row[0]}}</td>
+                  <td>{{'%0.2f'|format(row[2])}}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <h2>Wilgotności</h2>
+            <table class="u-full-width">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in hum %}
+                <tr>
+                  <td>{{row[0]}}</td>
+                  <td>{{'%0.2f'|format(row[2])}}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+        </div>
+
+        <div class="two-thirds column" style="margin-top: 5%">
+        <div class="row">
+          <div class="row">
+            <div class="three columns">
+                <div id="chart_temps"></div>
+                <div id="chart_humid"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <!-- Fetch jQuery -->
+  <script src="//code.jquery.com/jquery-3.5.0.min.js"></script>
+
+  <!-- Początek plików  Datetimepickera -->
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css"/ >
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+
+  <script>
+
+    jQuery('#datetimepicker1').datetimepicker(
+      {
+        format:'Y-m-d H:i',
+        defaultDate:'{{from_date}}'
+      });
+    jQuery('#datetimepicker2').datetimepicker({
+        format:'Y-m-d H:i',
+        defaultDate:'{{to_date}}'
+      });
+
+    //Funkcja wybierania radio buttona
+    jQuery("#range_select input[type=radio]").click(function(){
+        jQuery(".sensor_id").val({{sensorid}});
+        jQuery("#range_select").submit();
+      });
+    
+    //Funckja generowania wykresu w Plotly
+    jQuery("#plotly").click(function(){
+      jQuery("#plotly_wait").text("Wysyłam dane...");
+      jQuery("#plotly_url").text("");
+      {% autoescape false %}
+      jQuery.get("/to_plotly?{{query_string}}")
+      {% endautoescape %}
+        .done(function( data ) {
+          jQuery("#plotly_url").attr("href",data);
+          jQuery("#plotly_url").text("Kliknij by zobaczyć wykres");
+          jQuery("#plotly_wait").text("");
+	  });
+	      return false;  //Powoduje że kliknięcie w link nie odświeża strony.
+	});
+    </script>
+
+  <script type="text/javascript" src="https://www.google.com/jsapi?autoload={'modules':[{'name':'visualization','version':'1','packages':['corechart']}]}"></script>
+
+      <script>
+       google.load('visualization', '1', {packages: ['corechart']});
+    google.setOnLoadCallback(drawChart);
+
+    //Rysowanie wykresu temperatur
+    function drawChart() {
+
+      var data = new google.visualization.DataTable();
+      data.addColumn('datetime', 'Czas');
+      data.addColumn('number', 'Temperatura');
+      data.addRows([
+          {% for row in temp %}
+            [new Date({{row[0][0:4]}},{{row[0][5:7]}}-1,{{row[0][8:10]}},{{row[0][11:13]}},{{row[0][14:16]}}),{{'%0.2f'|format(row[2])}}],
+          {% endfor %}
+        ]);
+
+      var options = {
+        width: 600,
+        height: 563,
+        hAxis: {
+          title: "Data",
+          gridlines: { count: {{temp_items}}, color: '#CCC' },
+          format: 'dd-MMM-yyyy HH:mm' },
+        vAxis: {
+          title: 'Stopnie Celciusza'
+        },
+        title: 'Temperatura',
+        curveType: 'function',  //Powoduje zakrzywienie linii
+	colors: ['red']
+      };
+
+      var chart = new google.visualization.LineChart(document.getElementById('chart_temps'));
+
+      chart.draw(data, options);
+
+    }
+
+      </script>
+
+<script>
+    google.load('visualization', '1', {packages: ['corechart']});
+    google.setOnLoadCallback(drawChart);
+
+    //Rysowanie wykresu wilgotności
+    function drawChart() {
+
+      var data = new google.visualization.DataTable();
+      data.addColumn('datetime', 'Czas');
+      data.addColumn('number', 'Wilgotność');
+      data.addRows([
+          {% for row in hum %}
+            [new Date({{row[0][0:4]}},{{row[0][5:7]}}-1,{{row[0][8:10]}},{{row[0][11:13]}},{{row[0][14:16]}}),{{'%0.2f'|format(row[2])}}],
+          {% endfor %}
+        ]);
+
+      var options = {
+        width: 600,
+        height: 563,
+        hAxis: {
+          title: "Data",
+          gridlines: { count: {{hum_items}}, color: '#CCC' },
+          format: 'dd-MMM-yyyy HH:mm'        },
+        vAxis: {
+          title: 'Procent'
+        },
+        title: 'Wilgotność',
+        curveType: 'function'  //Powoduje zakrzywienie linii
+      };
+
+      var chart = new google.visualization.LineChart(document.getElementById('chart_humid'));
+
+      chart.draw(data, options);
+
+    }
+
+      </script>
+</html>
