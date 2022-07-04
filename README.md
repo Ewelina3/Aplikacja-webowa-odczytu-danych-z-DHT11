@@ -5,6 +5,10 @@ Schemat układu:
 
 ![](images/schemat%20układu.png)
 
+Stos aplikacyjny:
+
+![](images/Stos_aplikacyjny.png)
+
 Wymagane instalacje : 
 
 Python3: "sudo apt-get install python3-pip"
