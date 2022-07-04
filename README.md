@@ -184,6 +184,10 @@ Włączenie usługi:
 ```
 systemctl enable emperor.uwsgi.service
 ```
+**Restart usługi** - ważne po każdej zmianie głównego skryptu lab_app.py należy zresetować usługę:
+```
+systemctl restart emperor.uwsgi.service
+```
 Po takich operacjach nasza aplikacja będzie się odpalać zawsze, nawet po reboocie
 
 ### Instalacja i tworzenie bazy danych (SQLite3)
@@ -258,3 +262,13 @@ python
 import chart_studio
 chart_studio.tools.set_credentials_file(username='ewela123456', api_key='lr1c37zw')
 ```
+
+## Główne pliki programu:
+**lab_app.py** - główny skrypt aplikacji zajmujący się routingiem, odczytywaniem danych z bazy i ładowaniem widoków aplikacji, przygotowuje również diagram w Plotly
+**env_log.py** - skrypt odczytujący wartości z czujnika i zapisujący je do bazy danych. Używany w cronie w celu pozyskiwania co 5 minut nowych danych
+Widoki w folderze templates:
+**lab_env_db.html** - widok aplikacji przedstawiający archiwalne daty z czujników w tabelkach, wykresy z tych danych oraz filtry umożliwiające wyświetlanie danych z zakresu podanego przez użytkownika i generowanie diagramu Plotly
+**lab_temp.html** - widok przedstawiający obecną temperaturę i wilgotność, odświeżający się automatycznie co 10 sekund
+**no_sensor.html** - prosty widok informujący użytkownika o braku sensora
+Baza danych:
+**lab_app.db** - baza danych aplikacji z dwoma tablicami jedna przechowująca temperatury, druga wilgotność
