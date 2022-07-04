@@ -1,6 +1,10 @@
 # lab_app
 Aplikacja pozyskująca informacje pogodowe z czujnika DHT11 i przedstawiająca je na wykresie - aplikacja webowa
 
+Schemat układu:
+
+![](images/schemat%20ukladu.png)
+
 Wymagane instalacje : 
 
 Python3: "sudo apt-get install python3-pip"
