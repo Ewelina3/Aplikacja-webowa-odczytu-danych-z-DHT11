@@ -3,7 +3,7 @@ Aplikacja pozyskująca informacje pogodowe z czujnika DHT11 i przedstawiająca j
 
 Schemat układu:
 
-![](images/schemat%20ukladu.png)
+![](images/schemat%20układu.png)
 
 Wymagane instalacje : 
 
